@@ -1,10 +1,25 @@
 version: '3.0'
 
 services:
+  collector:
+    image: otel/opentelemetry-collector:latest
+    container_name: collector
+    hostname: collector
+    depends_on:
+      tempo:
+        condition: service_healthy
+      prometheus:
+        condition: service_healthy
+    command: ['--config=/etc/collector-config.yaml']
+    volumes:
+      - ./collector-config-local.yaml:/etc/collector-config.yaml
+    ports:
+      - '5555:5555'
+      - '6666:6666'
 
   tempo:
     image: grafana/tempo:1.5.0
-    command: [ "-search.enabled=true", "-config.file=/etc/tempo.yaml" ]
+    command: ['-search.enabled=true', '-config.file=/etc/tempo.yaml']
     container_name: tempo
     hostname: tempo
     volumes:
@@ -12,8 +27,8 @@ services:
       - ./o11y-backend/tempo-overrides.yaml:/etc/overrides.yaml
       - ./tempo-data:/tmp/tempo
     ports:
-      - "3200:3200"
-      - "4317:4317"
+      - '3200:3200'
+      - '4317:4317'
     healthcheck:
       interval: 5s
       retries: 10
@@ -30,7 +45,7 @@ services:
     volumes:
       - ./o11y-backend/prometheus.yaml:/etc/prometheus.yaml
     ports:
-      - "9090:9090"
+      - '9090:9090'
     healthcheck:
       interval: 5s
       retries: 10
@@ -39,7 +54,7 @@ services:
   grafana:
     image: grafana/grafana:9.2.2
     container_name: grafana
-    hostname: grafana 
+    hostname: grafana
     depends_on:
       tempo:
         condition: service_healthy
@@ -53,7 +68,7 @@ services:
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
       - GF_AUTH_DISABLE_LOGIN_FORM=true
     ports:
-      - "3000:3000"
+      - '3000:3000'
     healthcheck:
       interval: 5s
       retries: 10
